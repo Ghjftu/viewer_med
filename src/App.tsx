@@ -6,6 +6,32 @@ import type { MisIntegrationInfo, ModelInput, ModelState, ViewerData } from './t
 
 const MODEL_COLORS = ['#ef4444', '#3b82f6', '#22c55e', '#eab308', '#a855f7', '#06b6d4', '#f97316'];
 const DEFAULT_MODEL_OPACITY = 1;
+const DEMO_MODELS: ModelState[] = [
+  {
+    id: 'demo-liver',
+    url: 'liver.stl',
+    name: 'Печень',
+    color: '#b4533a',
+    opacity: 1,
+    visible: true,
+    position: [0, 0, 0],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
+    group: 'Demo',
+  },
+  {
+    id: 'demo-tumor',
+    url: 'tumor.stl',
+    name: 'Опухоль',
+    color: '#ef4444',
+    opacity: 1,
+    visible: true,
+    position: [0, 0, 0],
+    rotation: [0, 0, 0],
+    scale: [1, 1, 1],
+    group: 'Demo',
+  },
+];
 
 const getDefaultModelColor = (index: number) => MODEL_COLORS[index % MODEL_COLORS.length];
 
@@ -87,6 +113,10 @@ const getInitialPatientInfo = () => {
     if (sceneState?.patientInfo) return sceneState.patientInfo;
   }
 
+  if (!urlParams.get('fileUrl') && !urlParams.get('configUrl') && !urlParams.get('manifestUrl')) {
+    return { name: 'Демо-пациент', study: 'Тестовая сцена: печень и опухоль' };
+  }
+
   return undefined;
 };
 
@@ -114,6 +144,55 @@ const getInitialIntegrationInfo = (): MisIntegrationInfo | undefined => {
 
   return undefined;
 };
+
+class ViewerErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  render() {
+    if (!this.state.error) return this.props.children;
+
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          padding: 24,
+          background: '#111827',
+          color: '#e5e7eb',
+          fontFamily: 'system-ui, sans-serif',
+        }}
+      >
+        <div style={{ maxWidth: 680 }}>
+          <h1 style={{ margin: '0 0 12px', color: '#fecaca', fontSize: 24 }}>Не удалось загрузить сцену</h1>
+          <p style={{ margin: '0 0 10px', lineHeight: 1.5 }}>
+            Проверьте, что URL модели или manifest доступны с этого web-сервера. Для запуска без параметров в
+            сборке должны лежать demo-файлы <code>liver.stl</code> и <code>tumor.stl</code>.
+          </p>
+          <pre
+            style={{
+              whiteSpace: 'pre-wrap',
+              padding: 12,
+              borderRadius: 8,
+              background: '#0f172a',
+              color: '#fca5a5',
+              fontSize: 13,
+            }}
+          >
+            {this.state.error.message}
+          </pre>
+        </div>
+      </div>
+    );
+  }
+}
 
 const App: React.FC = () => {
   const { addModel, setModels } = useViewerStore();
@@ -191,24 +270,16 @@ const App: React.FC = () => {
 
     // 4. Демо-режим (без параметров)
     if (!encodedData && !fileUrl && !stateParam && !configUrl) {
-      console.log('[App] No URL params, loading demo model from /model.stl');
-      addModel({
-        url: '/model.stl',
-        name: 'Тестовая модель',
-        color: '#3b82f6',
-        opacity: 1,
-        visible: true,
-        position: [0, 0, 0],
-        rotation: [0, 0, 0],
-        scale: [1, 1, 1],
-        group: 'Demo',
-      });
+      console.log('[App] No URL params, loading demo scene');
+      setModels(DEMO_MODELS);
     }
   }, [addModel, setModels]);
 
   return (
     <div style={{ width: '100%', height: '100vh', overflow: 'hidden', backgroundColor: '#111' }}>
-      <Layout patientInfo={patientInfo} integrationInfo={integrationInfo} />
+      <ViewerErrorBoundary>
+        <Layout patientInfo={patientInfo} integrationInfo={integrationInfo} />
+      </ViewerErrorBoundary>
     </div>
   );
 };
