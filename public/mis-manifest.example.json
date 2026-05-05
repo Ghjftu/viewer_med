@@ -1,0 +1,15 @@
+{
+  "studyId": "242746744",
+  "patient": "Иванов Петр Михайлович",
+  "study": "МРТ чего-то там",
+  "sourcePath": "\\\\10.88.250.12\\gynMRT\\242746744\\",
+  "outputPath": "\\\\10.88.250.12\\gynMRT\\242746744\\",
+  "artifactBaseUrl": "http://localhost:4174/studies/242746744/artifacts",
+  "models": [
+    {
+      "url": "http://localhost:4174/studies/242746744/files/model.stl",
+      "name": "Модель",
+      "group": "МРТ чего-то там"
+    }
+  ]
+}
